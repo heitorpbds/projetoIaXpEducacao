@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset # Modificado de TensorDataset
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MaxAbsScaler # Alterado de MinMaxScaler
 from scipy import sparse # Importa a biblioteca de matrizes esparsas
 
 # --- NOTA DE DEPENDÊNCIAS ---
@@ -138,8 +138,8 @@ def train_autoencoder_model(log_df, epochs=10, batch_size=64):
     vectorizer = TfidfVectorizer(max_features=1000)
     X = vectorizer.fit_transform(log_df['clean_message']) # Retorna matriz esparsa
     
-    # 2. Escalar: MinMaxScaler suporta matrizes esparsas
-    scaler = MinMaxScaler()
+    # 2. Escalar: Usar MaxAbsScaler que suporta matrizes esparsas
+    scaler = MaxAbsScaler()
     X_scaled = scaler.fit_transform(X) # Retorna matriz esparsa
     
     # 3. Preparar para o PyTorch usando o Dataset customizado
