@@ -11,7 +11,7 @@ import os
 import pickle
 
 # Define o caminho do arquivo de log e do modelo salvo
-LOG_FILE = os.path.join("data", "app.log")
+LOG_FILE = os.path.join("data", "app_treino.log")
 MODEL_FILE = os.path.join("model", "model_kmeans.pkl")
 
 def parse_logs(log_string):

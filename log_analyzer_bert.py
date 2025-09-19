@@ -16,7 +16,7 @@ from tqdm import tqdm
 # pip install torch transformers scikit-learn tqdm
 
 # Define o caminho do arquivo de log e do modelo salvo
-LOG_FILE = os.path.join("data", "app.log")
+LOG_FILE = os.path.join("data", "app_treino.log")
 # Altera o nome do arquivo do modelo para refletir a nova abordagem
 MODEL_FILE = os.path.join("model", "model_bert_kmeans.pkl")
 EMBEDDINGS_FILE = os.path.join("model", "log_embeddings.pkl") # Para cachear os embeddings
