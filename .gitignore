@@ -1,0 +1,4 @@
+data/app_bkp.log
+data/app.log
+model/model_markov.pkl
+model/model_kmeans.pkl

@@ -1,0 +1,7 @@
+services:
+  log-analyzer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: log-analyzer-app
+    container_name: log_analyzer_container
