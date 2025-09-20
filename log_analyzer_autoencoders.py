@@ -18,7 +18,7 @@ from scipy import sparse # Importa a biblioteca de matrizes esparsas
 # pip install torch scikit-learn scipy
 
 # Define o caminho do arquivo de log e do modelo salvo
-LOG_FILE = os.path.join("data", "app_treino.log")
+LOG_FILE = os.path.join("data", "app.log")
 MODEL_FILE = os.path.join("model", "model_autoencoder.pkl") # Nome do modelo alterado
 
 def parse_logs(log_string):
@@ -129,7 +129,7 @@ class Autoencoder(nn.Module):
         x = self.decoder(x)
         return x
 
-def train_autoencoder_model(log_df, epochs=10, batch_size=64):
+def train_autoencoder_model(log_df, epochs=10, batch_size=3072): # 1. AUMENTADO de 64 para 512
     """
     Treina o modelo Autoencoder com os dados de log.
     """
@@ -146,8 +146,17 @@ def train_autoencoder_model(log_df, epochs=10, batch_size=64):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"🧠 Treinando no dispositivo: {device}")
     
+    # 2. USAR MÚLTIPLOS WORKERS PARA CARREGAR OS DADOS EM PARALELO
+    # Tenta usar todos os cores de CPU disponíveis, com um mínimo de 2.
+    try:
+        num_workers = os.cpu_count()
+    except NotImplementedError:
+        num_workers = 2
+    print(f"Usando {num_workers} workers para o carregamento de dados.")
+
     dataset = SparseLogDataset(X_scaled) # Usa o novo Dataset
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    # Adiciona num_workers e pin_memory para otimizar a transferência de dados para a GPU
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
     
     # 4. Inicializar e treinar o modelo
     input_dim = X.shape[1]
@@ -159,7 +168,7 @@ def train_autoencoder_model(log_df, epochs=10, batch_size=64):
     for epoch in range(epochs):
         total_loss = 0
         for inputs in dataloader:
-            inputs = inputs.to(device)
+            inputs = inputs.to(device, non_blocking=True) # Adiciona non_blocking
             optimizer.zero_grad()
             outputs = model(inputs)
             loss = criterion(outputs, inputs)
@@ -245,14 +254,25 @@ if __name__ == "__main__":
     # Detecta anomalias no conjunto de logs
     logs_df = detect_anomalies_autoencoder(logs_df, model)
 
-    # Exibe os logs mais anômalos (maior erro de reconstrução)
-    print("\n--- 📊 Top 10 Logs Mais Anômalos ---\n")
+    # Exibe os logs mais anômalos em formato de tabela
+    print("\n--- 📊 Tabela de Análise de Anomalias (Top 10) ---\n")
     
-    anomalous_logs = logs_df.sort_values(by='anomaly_score', ascending=False).head(10)
+    anomalous_logs = logs_df.sort_values(by='anomaly_score', ascending=False).drop_duplicates(subset=['clean_message'], keep='first').head(10)
 
     if anomalous_logs.empty:
         print("Nenhuma anomalia encontrada.")
     else:
+        # Imprime o cabeçalho da tabela
+        print(f"{'Score':<10} | {'Timestamp':<28} | {'IP de Origem':<16} | {'Log Original'}")
+        print(f"{'-'*10}-+-{'-'*28}-+-{'-'*16}-+-{'-'*50}")
+
         for _, row in anomalous_logs.iterrows():
-            print(f"Score (Erro): {row['anomaly_score']:.6f}")
-            print(f"  Log Original: {row['message']}\n")
+            # Formata o timestamp para melhor legibilidade
+            ts = row['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
+            
+            # Trunca a mensagem de log se for muito longa para caber na tabela
+            log_msg = row['message']
+            if len(log_msg) > 70:
+                log_msg = log_msg[:67] + "..."
+
+            print(f"{row['anomaly_score']:.6f} | {ts:<28} | {row['ip']:<16} | {log_msg}")

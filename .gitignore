@@ -3,3 +3,4 @@ data/app.log
 data/app_treino.log
 model/model_markov.pkl
 model/model_kmeans.pkl
+/model

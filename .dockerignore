@@ -1,9 +1,9 @@
 # Ignorar o ambiente virtual do Python
-.venv/
+.venv
 venv/
 
 # Ignorar caches do Python
-__pycache__/
+__pycache__
 *.pyc
 *.pyo
 *.pyd
@@ -13,4 +13,5 @@ __pycache__/
 .idea/
 
 # Ignorar o diretório do Git
-.git/
+.git
+.gitignore
