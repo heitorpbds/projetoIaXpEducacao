@@ -237,18 +237,31 @@ if __name__ == "__main__":
 
     logs_df = parse_logs(log_data)
 
+    # Define o dispositivo de execução (CPU ou GPU)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"INFO: Executando no dispositivo: {device}")
+
     if os.path.exists(MODEL_FILE):
         print(f"\n🔄 Carregando modelo Autoencoder existente de '{MODEL_FILE}'...")
-        with open(MODEL_FILE, 'rb') as f:
-            model = pickle.load(f)
-        print("✅ Modelo carregado com sucesso!")
+        try:
+            with open(MODEL_FILE, 'rb') as f:
+                # Usa torch.load com map_location para carregar o modelo no dispositivo correto
+                model = torch.load(f, map_location=device)
+            print("✅ Modelo carregado com sucesso!")
+        except Exception as e:
+            print(f"⚠️ Erro ao carregar o modelo: {e}. Treinando um novo modelo.")
+            model = None # Força o retreinamento
     else:
-        print(f"\n🚫 Modelo não encontrado. Treinando um novo modelo Autoencoder...")
+        model = None # Garante que a variável exista
+
+    if model is None:
+        print(f"\n🚫 Modelo não encontrado ou falhou ao carregar. Treinando um novo modelo Autoencoder...")
         model = train_autoencoder_model(logs_df)
 
         os.makedirs(os.path.dirname(MODEL_FILE), exist_ok=True)
         with open(MODEL_FILE, 'wb') as f:
-            pickle.dump(model, f)
+            # Usa torch.save para salvar o modelo, que é a prática recomendada
+            torch.save(model, f)
         print(f"💾 Modelo salvo com sucesso em '{MODEL_FILE}'!")
 
     # Detecta anomalias no conjunto de logs
