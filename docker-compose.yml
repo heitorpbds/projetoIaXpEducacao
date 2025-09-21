@@ -1,7 +1,17 @@
+version: '3.8'
+
 services:
-  log-analyzer:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: log-analyzer-app
-    container_name: log_analyzer_container
+  log_analyzer:
+    build: .
+    volumes:
+      # Monta o diretório 'data' local (onde estão seus logs) para dentro do contêiner.
+      # Isso permite que a aplicação leia os arquivos de log da sua máquina host.
+      - ./data:/app/data
+      # Monta o diretório 'model' local para persistência do modelo treinado.
+      # O modelo será salvo/carregado deste diretório na sua máquina host.
+      - ./model:/app/model
+    command: python log_analyzer_autoencoders.py data/app.log --threshold_quantile 0.98 --output_format table
+    # Aumenta o tamanho da memória compartilhada para 2GB (valor padrão é 64MB)
+    shm_size: '2g' 
+    # Opcional: Se você quiser ver a saída imediatamente no terminal onde o docker-compose é executado.
+    # tty: true
